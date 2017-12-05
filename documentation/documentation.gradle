@@ -32,12 +32,6 @@ configurations {
     //asciidoctor
 }
 
-if ( JavaVersion.current().isJava8Compatible() ) {
-    tasks.withType( Javadoc ) {
-        options.addStringOption( 'Xdoclint:none', '-quiet' )
-    }
-}
-
 dependencies {
 	ext.pressgangVersion = '3.0.0'
 
@@ -122,8 +116,6 @@ final File javadocDir = mkdir( new File( (File) project.buildDir, 'javadocs' ) )
 task aggregateJavadocs(type: Javadoc) {
     description = 'Builds the aggregated (unified) JavaDocs across all sub-projects'
 
-    final int copyrightYear = new GregorianCalendar().get( Calendar.YEAR );
-
     // exclude any generated sources (this is not working: http://forums.gradle.org/gradle/topics/excluding_generated_source_from_javadoc)
     exclude "**/generated-src/**"
 
@@ -175,7 +167,7 @@ task aggregateJavadocs(type: Javadoc) {
         stylesheetFile = rootProject.file( 'shared/javadoc/stylesheet.css' )
         windowTitle = 'Hibernate JavaDocs'
         docTitle = "Hibernate JavaDoc ($project.version)"
-        bottom = "Copyright &copy; 2001-$copyrightYear <a href=\"http://redhat.com\">Red Hat, Inc.</a>  All Rights Reserved."
+        bottom = "Copyright &copy; 2001-${project.copyrightYear} <a href=\"http://redhat.com\">Red Hat, Inc.</a>  All Rights Reserved."
         use = true
         options.encoding = 'UTF-8'
         links = [ 'http://download.oracle.com/javase/6/docs/api/', 'http://download.oracle.com/javaee/6/api/' ]

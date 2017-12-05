@@ -55,6 +55,12 @@ allprojects {
             url "http://snapshots.jboss.org/maven2/"
         }
     }
+
+    if ( JavaVersion.current().isJava8Compatible() ) {
+        tasks.withType( Javadoc ) {
+            options.addStringOption( 'Xdoclint:none', '-quiet' )
+        }
+    }
 }
 
 ext {
@@ -68,6 +74,7 @@ ext {
 	hibernateFullVersion = hibernateTargetVersion
 	hibernateMajorMinorVersion = versionComponents[0] + '.' + versionComponents[1]
 	hibernateMajorVersion = versionComponents[0]
+	copyrightYear = new GregorianCalendar().get( Calendar.YEAR );
 }
 
 idea {
@@ -305,6 +312,32 @@ subprojects { subProject ->
 	} )
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// javadoc
+	javadoc {
+		options.stylesheetFile = rootProject.file( 'shared/javadoc/stylesheet.css' )
+		options.windowTitle 'Hibernate JavaDocs'
+		source = subProject.sourceSets.main.java
+		options.docTitle "Hibernate JavaDoc ($project.version)"
+		options.bottom "Copyright &copy; 2001-${project.copyrightYear} <a href=\"http://redhat.com\">Red Hat, Inc.</a>  All Rights Reserved."
+		options.use true
+		options.encoding 'UTF-8'
+		options.links = [ 'http://download.oracle.com/javase/6/docs/api/', 'http://download.oracle.com/javaee/6/api/' ]
+		if( classpath ) {
+			classpath += subProject.sourceSets.main.output + subProject.sourceSets.main.compileClasspath
+		}
+		else {
+			classpath = subProject.sourceSets.main.output + subProject.sourceSets.main.compileClasspath
+		}
+
+	doLast {
+		copy {
+			from rootProject.file( 'shared/javadoc/images' )
+			into new File( destinationDir, "/images" )
+		}
+	}
+	}
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// artifact
@@ -353,6 +386,13 @@ subprojects { subProject ->
 	sourcesJar {
 		manifest = jar.manifest
 	}
+
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		from javadoc.destinationDir
+		classifier = 'javadoc'
+		manifest = jar.manifest
+	}
+
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -465,6 +505,7 @@ subprojects { subProject ->
 					artifact( sourcesJar ) {
 						classifier 'sources'
 					}
+					artifact javadocJar
 				}
 				// http://issues.gradle.org/browse/GRADLE-2966
 				// Once ^^ is resolved:
